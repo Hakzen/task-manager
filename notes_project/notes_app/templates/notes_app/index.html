@@ -1,0 +1,329 @@
+{% extends 'notes_app/base.html' %}
+
+{% block title %}All Tasks{% endblock %}
+
+{% block content %}
+<!-- Search Section -->
+<section class="search-section" aria-label="Search tasks">
+    <form method="GET" class="search-form" role="search">
+        <input 
+            type="text" 
+            name="search_query" 
+            placeholder="Search tasks by title..." 
+            value="{{ search_query }}"
+            class="form-control search-input"
+            aria-label="Search tasks"
+        >
+        <button type="submit" class="btn btn-search" aria-label="Search tasks">
+            <i class="fas fa-search" aria-hidden="true"></i>
+            Search
+        </button>
+    </form>
+</section>
+
+<!-- Add Task Section -->
+<section class="add-task-section" aria-label="Add new task">
+    <div class="add-task-card">
+        <h2>
+            <i class="fas fa-plus" aria-hidden="true"></i>
+            Add New Task
+        </h2>
+        
+        <!-- Add Task Form -->
+        <form method="POST" action="{% url 'add_task' %}" class="add-task-form" novalidate>
+            {% csrf_token %}
+            
+            <!-- Use Django form if available (for form errors) -->
+            {% if add_task_form %}
+                {{ add_task_form.non_field_errors }}
+                
+                <div class="form-group">
+                    {{ add_task_form.title.errors }}
+                    {{ add_task_form.title }}
+                    {% if add_task_form.title.help_text %}
+                        <small class="form-help">{{ add_task_form.title.help_text }}</small>
+                    {% endif %}
+                </div>
+                
+                <div class="form-group">
+                    {{ add_task_form.description.errors }}
+                    {{ add_task_form.description }}
+                    {% if add_task_form.description.help_text %}
+                        <small class="form-help">{{ add_task_form.description.help_text }}</small>
+                    {% endif %}
+                </div>
+            {% else %}
+                <!-- Simple form fields -->
+                <div class="form-group">
+                    <label for="id_title" class="form-label">Task Title <span class="required">*</span></label>
+                    <input 
+                        type="text" 
+                        name="title" 
+                        id="id_title"
+                        placeholder="Enter task title..." 
+                        class="form-control"
+                        required
+                        maxlength="200"
+                        aria-describedby="title-help"
+                    >
+                    <small id="title-help" class="form-help">Required: Enter a descriptive title for your task</small>
+                </div>
+                
+                <div class="form-group">
+                    <label for="id_description" class="form-label">Task Description</label>
+                    <textarea 
+                        name="description" 
+                        id="id_description"
+                        placeholder="Enter task description (optional)..." 
+                        class="form-control"
+                        rows="3"
+                        maxlength="2000"
+                        aria-describedby="description-help"
+                    ></textarea>
+                    <small id="description-help" class="form-help">Optional: Add additional details about your task</small>
+                </div>
+            {% endif %}
+            
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-plus" aria-hidden="true"></i>
+                    Add Task
+                </button>
+                <button type="reset" class="btn btn-secondary">
+                    <i class="fas fa-undo" aria-hidden="true"></i>
+                    Clear
+                </button>
+            </div>
+        </form>
+    </div>
+</section>
+
+<!-- Task Statistics -->
+{% if total_tasks > 0 %}
+<section class="stats-section" aria-label="Task statistics">
+    <div class="stats-container">
+        <div class="stat-item">
+            <span class="stat-number">{{ total_tasks }}</span>
+            <span class="stat-label">Total Tasks</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">{{ pending_tasks }}</span>
+            <span class="stat-label">Pending</span>
+        </div>
+        <div class="stat-item">
+            <span class="stat-number">{{ completed_tasks }}</span>
+            <span class="stat-label">Completed</span>
+        </div>
+    </div>
+</section>
+{% endif %}
+
+<!-- Tasks List Section -->
+<section class="tasks-container" aria-label="All tasks">
+    <h2 class="section-title">
+        <i class="fas fa-list" aria-hidden="true"></i>
+        All Tasks
+        {% if search_query %}
+            <span class="search-results">({{ tasks|length }} results for "{{ search_query }}")</span>
+        {% endif %}
+    </h2>
+    
+    {% if tasks %}
+        <div class="tasks-list">
+            {% for task in tasks %}
+                <article class="task-card {% if task.is_completed %}completed{% endif %}" 
+                         data-task-id="{{ task.id }}"
+                         aria-labelledby="task-title-{{ task.id }}">
+                    
+                    <div class="task-header">
+                        <div class="task-info">
+                            <h3 id="task-title-{{ task.id }}" class="task-title">
+                                {{ task.title }}
+                                {% if task.is_completed %}
+                                    <span class="completion-badge">
+                                        <i class="fas fa-check" aria-hidden="true"></i>
+                                        Completed
+                                    </span>
+                                {% endif %}
+                            </h3>
+                            
+                            {% if task.description %}
+                                <div class="task-description">
+                                    <p>{{ task.description_preview }}</p>
+                                    {% if task.description|length > 100 %}
+                                        <button class="btn-link show-more" 
+                                                data-task-id="{{ task.id }}"
+                                                aria-label="Show full description">
+                                            Show more
+                                        </button>
+                                    {% endif %}
+                                </div>
+                            {% endif %}
+                            
+                            <div class="task-meta">
+                                <time class="created-date" datetime="{{ task.created_at|date:'c' }}">
+                                    <i class="fas fa-clock" aria-hidden="true"></i>
+                                    {{ task.created_date_formatted }} at {{ task.created_time_formatted }}
+                                </time>
+                                
+                                {% if task.updated_at != task.created_at %}
+                                    <time class="updated-date" datetime="{{ task.updated_at|date:'c' }}">
+                                        <i class="fas fa-edit" aria-hidden="true"></i>
+                                        Updated {{ task.updated_at|timesince }} ago
+                                    </time>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="task-actions" role="group" aria-label="Task actions">
+                            <!-- Toggle Completion Button -->
+                            <form action="{% url 'toggle_task_completion' task.id %}" method="POST" class="toggle-form">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="btn btn-toggle"
+                                        title="{% if task.is_completed %}Mark as incomplete{% else %}Mark as complete{% endif %}"
+                                        aria-label="{% if task.is_completed %}Mark task as incomplete{% else %}Mark task as complete{% endif %}">
+                                    <i class="fas {% if task.is_completed %}fa-check-circle{% else %}fa-circle{% endif %}" 
+                                       aria-hidden="true"></i>
+                                </button>
+                            </form>
+                            
+                            <!-- Edit Button -->
+                            <a href="{% url 'edit_task' task.id %}" 
+                               class="btn btn-edit" 
+                               title="Edit task"
+                               aria-label="Edit task: {{ task.title }}">
+                                <i class="fas fa-edit" aria-hidden="true"></i>
+                            </a>
+                            
+                            <!-- Delete Button -->
+                            <button 
+                                type="button"
+                                data-task-id="{{ task.id }}" 
+                                data-task-title="{{ task.title|addslashes|escapejs }}"
+                                class="btn btn-delete delete-btn" 
+                                title="Delete task"
+                                aria-label="Delete task: {{ task.title }}">
+                                <i class="fas fa-trash" aria-hidden="true"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Full description (hidden by default) -->
+                    {% if task.description and task.description|length > 100 %}
+                        <div class="task-description-full" id="full-desc-{{ task.id }}" style="display: none;">
+                            <p>{{ task.description|linebreaks }}</p>
+                            <button class="btn-link show-less" 
+                                    data-task-id="{{ task.id }}"
+                                    aria-label="Show less description">
+                                Show less
+                            </button>
+                        </div>
+                    {% endif %}
+                </article>
+            {% endfor %}
+        </div>
+    {% else %}
+        <!-- Empty State -->
+        <div class="empty-state">
+            <div class="empty-icon">
+                <i class="fas fa-clipboard-list" aria-hidden="true"></i>
+            </div>
+            <h3>No tasks found</h3>
+            <p>
+                {% if search_query %}
+                    No tasks match your search for "{{ search_query }}".
+                    <a href="{% url 'task_list' %}" class="btn-link">Clear search</a>
+                {% else %}
+                    Start by adding your first task above!
+                {% endif %}
+            </p>
+        </div>
+    {% endif %}
+</section>
+
+<!-- Delete Confirmation Form (Hidden) -->
+<form id="deleteForm" method="POST" style="display: none;">
+    {% csrf_token %}
+</form>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Toggle description visibility
+function toggleDescription(taskId) {
+    const fullDesc = document.getElementById(`full-desc-${taskId}`);
+    const showMoreBtn = document.querySelector(`[data-task-id="${taskId}"].show-more`);
+    const showLessBtn = document.querySelector(`[data-task-id="${taskId}"].show-less`);
+    
+    if (fullDesc) {
+        const isVisible = fullDesc.style.display !== 'none';
+        
+        if (isVisible) {
+            fullDesc.style.display = 'none';
+            if (showMoreBtn) showMoreBtn.style.display = 'inline-block';
+            if (showLessBtn) showLessBtn.style.display = 'none';
+        } else {
+            fullDesc.style.display = 'block';
+            if (showMoreBtn) showMoreBtn.style.display = 'none';
+            if (showLessBtn) showLessBtn.style.display = 'inline-block';
+        }
+    }
+}
+
+// Delete confirmation using event listeners
+document.addEventListener('DOMContentLoaded', function() {
+    const deleteButtons = document.querySelectorAll('.delete-btn');
+    const deleteForm = document.getElementById('deleteForm');
+    
+    deleteButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            const taskId = this.getAttribute('data-task-id');
+            const taskTitle = this.getAttribute('data-task-title');
+            
+            if (confirm(`Are you sure you want to delete this task?\n\n"${taskTitle}"`)) {
+                deleteForm.action = `/delete/${taskId}/`;
+                deleteForm.submit();
+            }
+        });
+    });
+    
+    // Show more/less description buttons
+    const showMoreButtons = document.querySelectorAll('.show-more');
+    const showLessButtons = document.querySelectorAll('.show-less');
+    
+    showMoreButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            const taskId = this.getAttribute('data-task-id');
+            toggleDescription(taskId);
+        });
+    });
+    
+    showLessButtons.forEach(function(button) {
+        button.addEventListener('click', function() {
+            const taskId = this.getAttribute('data-task-id');
+            toggleDescription(taskId);
+        });
+    });
+    
+    // Auto-focus on title field for better UX
+    const titleField = document.getElementById('id_title');
+    if (titleField) {
+        titleField.focus();
+    }
+    
+    // Form validation feedback
+    const addTaskForm = document.querySelector('.add-task-form');
+    if (addTaskForm) {
+        addTaskForm.addEventListener('submit', function(e) {
+            const titleField = this.querySelector('#id_title');
+            if (titleField && titleField.value.trim() === '') {
+                e.preventDefault();
+                alert('Please enter a task title.');
+                titleField.focus();
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

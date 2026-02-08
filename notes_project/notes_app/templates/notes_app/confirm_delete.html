@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delete Task - Task Manager</title>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'notes_app/css/styles.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <div class="container">
+        <header class="header">
+            <a href="{% url 'list_tasks' %}" class="back-btn">
+                <i class="fas fa-arrow-left"></i> Back to Tasks
+            </a>
+            <h1><i class="fas fa-trash"></i> Delete Task</h1>
+        </header>
+
+        <main class="delete-container">
+            <div class="delete-card">
+                <div class="delete-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                
+                <h2>Are you sure?</h2>
+                <p>You are about to delete the following task:</p>
+                
+                <div class="task-preview">
+                    <h3>{{ task.title }}</h3>
+                    {% if task.description %}
+                        <p>{{ task.description|truncatewords:20 }}</p>
+                    {% endif %}
+                    <div class="task-meta">
+                        <span class="priority priority-{{ task.priority }}">
+                            <i class="fas fa-flag"></i> {{ task.get_priority_display }}
+                        </span>
+                        {% if task.due_date %}
+                            <span class="due-date">
+                                <i class="fas fa-calendar"></i> {{ task.due_date }}
+                            </span>
+                        {% endif %}
+                        <span class="created-date">
+                            <i class="fas fa-clock"></i> {{ task.created_at|date:"M d, Y" }}
+                        </span>
+                    </div>
+                </div>
+
+                <form method="POST" class="delete-form">
+                    {% csrf_token %}
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="fas fa-trash"></i> Yes, Delete Task
+                        </button>
+                        <a href="{% url 'list_tasks' %}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </main>
+    </div>
+
+    {% load static %}
+    <script src="{% static 'notes_app/js/scripts.js' %}"></script>
+</body>
+</html>

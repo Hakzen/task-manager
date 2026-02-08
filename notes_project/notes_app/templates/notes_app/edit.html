@@ -1,0 +1,151 @@
+{% extends 'notes_app/base.html' %}
+
+{% block title %}Edit Task{% endblock %}
+
+{% block content %}
+<div class="edit-container">
+    <div class="edit-card">
+        <!-- Back Button -->
+        <div class="back-section">
+            <a href="{% url 'task_list' %}" class="btn btn-secondary back-btn">
+                <i class="fas fa-arrow-left" aria-hidden="true"></i>
+                Back to Tasks
+            </a>
+        </div>
+
+        <!-- Edit Form Header -->
+        <div class="form-header">
+            <h2>
+                <i class="fas fa-edit" aria-hidden="true"></i>
+                Edit Task
+            </h2>
+            <p class="form-subtitle">Update your task details below</p>
+        </div>
+
+        <!-- Edit Task Form -->
+        <form method="POST" action="{% url 'edit_task' task.id %}" class="edit-form" novalidate>
+            {% csrf_token %}
+            
+            <!-- Title Field -->
+            <div class="form-group">
+                <label for="title" class="form-label">
+                    Task Title <span class="required">*</span>
+                </label>
+                <input 
+                    type="text" 
+                    name="title" 
+                    id="title"
+                    value="{{ task.title }}"
+                    class="form-control"
+                    required
+                    maxlength="200"
+                    placeholder="Enter task title..."
+                >
+                <small class="form-help">Required: Enter a descriptive title for your task</small>
+            </div>
+
+            <!-- Description Field -->
+            <div class="form-group">
+                <label for="description" class="form-label">
+                    Task Description
+                </label>
+                <textarea 
+                    name="description" 
+                    id="description"
+                    class="form-control"
+                    rows="4"
+                    maxlength="2000"
+                    placeholder="Enter task description (optional)..."
+                >{{ task.description }}</textarea>
+                <small class="form-help">Optional: Add additional details about your task</small>
+            </div>
+
+            <!-- Task Metadata (Read-only) -->
+            <div class="task-metadata">
+                <h3>Task Information</h3>
+                <div class="metadata-grid">
+                    <div class="metadata-item">
+                        <label>Created:</label>
+                        <span>{{ task.created_date_formatted }} at {{ task.created_time_formatted }}</span>
+                    </div>
+                    <div class="metadata-item">
+                        <label>Last Updated:</label>
+                        <span>{{ task.updated_at|date:"M d, Y H:i" }}</span>
+                    </div>
+                    <div class="metadata-item">
+                        <label>Status:</label>
+                        <span class="status-badge {% if task.is_completed %}completed{% else %}pending{% endif %}">
+                            {% if task.is_completed %}
+                                <i class="fas fa-check-circle" aria-hidden="true"></i>
+                                Completed
+                            {% else %}
+                                <i class="fas fa-clock" aria-hidden="true"></i>
+                                Pending
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Form Actions -->
+            <div class="form-actions">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-save" aria-hidden="true"></i>
+                    Save Changes
+                </button>
+                <a href="{% url 'task_list' %}" class="btn btn-secondary">
+                    <i class="fas fa-times" aria-hidden="true"></i>
+                    Cancel
+                </a>
+                <button type="reset" class="btn btn-outline">
+                    <i class="fas fa-undo" aria-hidden="true"></i>
+                    Reset
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus on title field
+    const titleField = document.getElementById('title');
+    if (titleField) {
+        titleField.focus();
+        titleField.select(); // Select all text for easy editing
+    }
+    
+    // Form validation feedback
+    const editForm = document.querySelector('.edit-form');
+    if (editForm) {
+        editForm.addEventListener('submit', function(e) {
+            const titleField = this.querySelector('#title');
+            if (titleField && titleField.value.trim() === '') {
+                e.preventDefault();
+                alert('Task title cannot be empty.');
+                titleField.focus();
+            }
+        });
+    }
+    
+    // Character counter for description (optional enhancement)
+    const descriptionField = document.getElementById('description');
+    if (descriptionField) {
+        const maxLength = descriptionField.getAttribute('maxlength');
+        if (maxLength) {
+            // Add character counter if needed
+            const counter = document.createElement('div');
+            counter.className = 'char-counter';
+            counter.textContent = `${descriptionField.value.length}/${maxLength}`;
+            descriptionField.parentNode.appendChild(counter);
+            
+            descriptionField.addEventListener('input', function() {
+                counter.textContent = `${this.value.length}/${maxLength}`;
+            });
+        }
+    }
+});
+</script>
+{% endblock %}

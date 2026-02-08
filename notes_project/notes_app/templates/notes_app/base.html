@@ -1,0 +1,141 @@
+<!--
+Django Notes/Task Manager - Base Template
+
+This is the base template that provides the common layout structure
+for all pages in the task management system. It includes the header,
+navigation, message display, and common JavaScript functionality.
+
+Author: Senior Full-Stack Developer
+Created: 2026
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    
+    <!-- SEO Meta Tags -->
+    <meta name="description" content="A simple and efficient task management system built with Django">
+    <meta name="keywords" content="task manager, notes, django, productivity">
+    <meta name="author" content="Senior Full-Stack Developer">
+    
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Task Manager - Django Web App">
+    <meta property="og:description" content="A simple and efficient task management system">
+    <meta property="og:type" content="website">
+    
+    <title>{% block title %}Task Manager{% endblock %} | Django Notes App</title>
+    
+    <!-- Load static files -->
+    {% load static %}
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{% static 'notes_app/favicon.ico' %}">
+    
+    <!-- External CSS -->
+    <link rel="stylesheet" href="{% static 'notes_app/css/styles.css' %}">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
+    {% block extra_css %}{% endblock %}
+    
+    <!-- JavaScript for CSRF token -->
+    <script>
+        // Get CSRF token for use in JavaScript
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+        const csrftoken = getCookie('csrftoken');
+    </script>
+</head>
+<body>
+    <!-- Main Container -->
+    <div class="container">
+        <!-- Header Section -->
+        <header class="header">
+            <!-- Clickable Title - Routes to Home -->
+            <a href="{% url 'task_list' %}" class="title-link" aria-label="Go to home page">
+                <h1>
+                    <i class="fas fa-tasks" aria-hidden="true"></i>
+                    Task Manager
+                </h1>
+            </a>
+            <p class="header-subtitle">Organize your tasks efficiently</p>
+        </header>
+
+        <!-- Django Messages Section -->
+        {% if messages %}
+            <div class="messages" role="alert" aria-live="polite">
+                {% for message in messages %}
+                    <div class="message {{ message.tags }} message-{{ message.level_tag }}" 
+                         data-message-id="{{ forloop.counter }}">
+                        <div class="message-content">
+                            {% if message.level_tag == 'error' %}
+                                <i class="fas fa-exclamation-circle" aria-hidden="true"></i>
+                            {% elif message.level_tag == 'success' %}
+                                <i class="fas fa-check-circle" aria-hidden="true"></i>
+                            {% elif message.level_tag == 'warning' %}
+                                <i class="fas fa-exclamation-triangle" aria-hidden="true"></i>
+                            {% elif message.level_tag == 'info' %}
+                                <i class="fas fa-info-circle" aria-hidden="true"></i>
+                            {% endif %}
+                            <span class="message-text">{{ message }}</span>
+                        </div>
+                        <button type="button" 
+                                class="close-btn" 
+                                onclick="this.parentElement.style.display='none'"
+                                aria-label="Close message">
+                            <i class="fas fa-times" aria-hidden="true"></i>
+                        </button>
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+
+        <!-- Main Content Area -->
+        <main class="main-content" role="main">
+            {% block content %}
+                <!-- Page content will be inserted here -->
+            {% endblock %}
+        </main>
+
+        <!-- Footer Section -->
+        <footer class="footer">
+            <p>&copy; 2026 Django Task Manager. Built with Django & Python.</p>
+        </footer>
+    </div>
+
+    <!-- JavaScript Files -->
+    <script src="{% static 'notes_app/js/scripts.js' %}"></script>
+    
+    <!-- Additional JavaScript -->
+    {% block extra_js %}{% endblock %}
+    
+    <!-- Auto-hide messages after 5 seconds -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const messages = document.querySelectorAll('.message');
+            messages.forEach(function(message) {
+                setTimeout(function() {
+                    message.style.opacity = '0';
+                    setTimeout(function() {
+                        message.style.display = 'none';
+                    }, 300);
+                }, 5000);
+            });
+        });
+    </script>
+</body>
+</html>
