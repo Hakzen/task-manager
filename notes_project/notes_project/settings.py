@@ -11,6 +11,11 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 """
 
 from pathlib import Path
+import os
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,22 +25,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-&cffjzrug-ulomh!37#6n@-i98+d@8=ud)xit2ldpor!_&dnsh'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-default-key-change-in-production')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 
-ALLOWED_HOSTS = ['127.0.0.1', 'localhost']
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost').split(',')
 
 # CSRF trusted origins for browser preview
-CSRF_TRUSTED_ORIGINS = [
-    'http://127.0.0.1:50706',
-    'http://localhost:50706',
-    'http://127.0.0.1:60440',
-    'http://localhost:60440',
-    'http://127.0.0.1:61312',
-    'http://localhost:61312',
-]
+CSRF_TRUSTED_ORIGINS = os.getenv('CSRF_TRUSTED_ORIGINS', 'http://127.0.0.1:50706,http://localhost:50706,http://127.0.0.1:60440,http://localhost:60440,http://127.0.0.1:61312,http://localhost:61312').split(',')
 
 
 # Application definition
